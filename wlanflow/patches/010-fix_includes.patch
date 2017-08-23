@@ -1,0 +1,25 @@
+Index: wlanflow/modules/OFConnectionManager/module/src/ofconnectionmanager.c
+===================================================================
+--- wlanflow.orig/modules/OFConnectionManager/module/src/ofconnectionmanager.c
++++ wlanflow/modules/OFConnectionManager/module/src/ofconnectionmanager.c
+@@ -45,7 +45,7 @@
+ #include <arpa/inet.h>
+ #include <netinet/in.h>
+ #include <netinet/tcp.h>
+-#include <sys/errno.h>
++#include <errno.h>
+ #include <netdb.h>
+ 
+ #include "ofconnectionmanager_int.h"
+Index: wlanflow/modules/OFConnectionManager/module/src/cxn_instance.c
+===================================================================
+--- wlanflow.orig/modules/OFConnectionManager/module/src/cxn_instance.c
++++ wlanflow/modules/OFConnectionManager/module/src/cxn_instance.c
+@@ -46,6 +46,7 @@
+ #include <netinet/tcp.h>
+ #include <arpa/inet.h>
+ #include <fcntl.h>
++#include <sys/uio.h>
+ 
+ 
+ /* Short hand logging macros */

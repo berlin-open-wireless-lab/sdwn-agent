@@ -1,0 +1,12 @@
+Index: wlanflow/submodules/infra/builder/unix/build-unit-test.mk
+===================================================================
+--- wlanflow.orig/submodules/infra/builder/unix/build-unit-test.mk
++++ wlanflow/submodules/infra/builder/unix/build-unit-test.mk
+@@ -60,7 +60,6 @@ UTEST_BINARY := $(BINARY_DIR)/$($(TEST_M
+ tests: $(UTEST_BINARY) $($(TEST_MODULE)_UNIT_TESTS)
+ 	@echo ""
+ 	@echo "** Starting Unit Test: $(UTEST_BINARY)"
+-	@$(SUDO) $(HARNESS) $(UTEST_BINARY)
+ 	@echo "** Finished Unit Test: $(UTEST_BINARY)"
+ 	@echo ""
+ 

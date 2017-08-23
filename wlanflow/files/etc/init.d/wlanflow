@@ -1,0 +1,36 @@
+#!/bin/sh /etc/rc.common
+
+START=21
+STOP=80
+
+USE_PROCD=1
+
+start_service() {
+
+	procd_open_instance
+	procd_set_param command /sbin/wlanflow
+	procd_set_param respawn
+	procd_set_param watch wlanflow
+	procd_close_instance
+}
+
+reload_service() {
+	if service_running; then
+		ubus call wlanflow reload
+	else
+		start
+	fi
+}
+
+stop() {
+	procd_kill wlanflow ''
+}
+
+service_running() {
+	ubus -t 30 wait_for wlanflow
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger wlanflow
+}

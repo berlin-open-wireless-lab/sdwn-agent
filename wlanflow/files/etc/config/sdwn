@@ -1,0 +1,10 @@
+# example SDWN config
+
+# config controller 'ofctl1'
+# 	option ipaddr '1.2.3.4'
+# 	option port   6633
+# 	option ubuspath 'path/to/ubus/socket'
+# 	option remoteport 1
+
+config controller
+
