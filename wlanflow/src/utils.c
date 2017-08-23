@@ -7,10 +7,34 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <net/ethernet.h>
 
 #include "utils.h"
+#include "ieee80211.h"
+
 
 #define INDENT_BUF(buf, n) char buf[n]; memset(buf, ' ', n); buf[n-1] = '\0';
+
+static void
+of_ht_cap_to_nl(of_ieee80211_ht_cap_t *in, struct ieee80211_ht_cap *out)
+{
+    of_ieee80211_mcs_info_t *mcs;
+    of_ieee80211_mcs_rx_mask_t rx_mask;
+    {
+        mcs = of_ieee80211_ht_cap_mcs_get(in);
+        of_ieee80211_mcs_info_rx_mask_get(mcs, &rx_mask);
+
+        memcpy(&out->mcs.rx_mask, &rx_mask.bytes, 10);
+        of_ieee80211_mcs_info_rx_highest_get(mcs, &out->mcs.rx_highest);
+        of_ieee80211_mcs_info_tx_params_get(mcs, &out->mcs.tx_params);
+    }
+    {
+        of_ieee80211_ht_cap_cap_info_get(in, &out->cap_info);
+        of_ieee80211_ht_cap_ampdu_params_info_get(in, &out->ampdu_params_info);
+        of_ieee80211_ht_cap_extended_ht_cap_info_get(in,
+            &out->extended_ht_cap_info);
+    }
+}
 
 static void
 print_rates(uint32_t *rates, size_t n_rates, size_t indent_depth)
@@ -50,7 +74,7 @@ print_ht_capabilities(struct ieee80211_ht_cap *ht_cap, size_t indent_depth)
 
     struct ieee80211_mcs_info *mcs = &ht_cap->mcs;
 
-    printf("%sHT capabilities:\n", indent);
+    printf("%sHT capabilities {\n", indent);
     printf("%s  capabilities: %04x\n", indent, ht_cap->cap_info);
 	printf("%s  AMPDU parameters: %02x\n", indent, ht_cap->ampdu_params_info);
     printf("%s  MCS\n", indent);
@@ -63,6 +87,7 @@ print_ht_capabilities(struct ieee80211_ht_cap *ht_cap, size_t indent_depth)
     printf("%s  extended HT capabilities: %04x\n", indent, ht_cap->extended_ht_cap_info);
     printf("%s  TX BF capabilities: %08x\n", indent, ht_cap->tx_BF_cap_info);
     printf("%s  Antenna selection: %02x\n", indent, ht_cap->antenna_selection_info);
+    printf("%s}\n", indent);
 }
 
 static void
@@ -337,6 +362,67 @@ _DEBUG_print_sdwn_related_switch_entity(void *arg)
         "}\n", dpid);
 }
 
+static void
+print_frequency_band_entity(of_sdwn_entity_band_t* band, size_t indent_depth)
+{
+
+	if (!band)
+		return;
+
+	INDENT_BUF(indent, indent_depth);
+
+	uint16_t band_no, cap_flags;
+	of_ieee80211_ht_cap_t *of_ht_cap;
+	// of_ieee80211_vht_cap_t *of_vht_cap;
+
+	struct ieee80211_ht_cap ht_cap;
+	// ieee80211_vht_cap vht_cap;
+
+	of_sdwn_entity_band_band_no_get(band, &band_no);
+	of_sdwn_entity_band_cap_flags_get(band, &cap_flags);
+
+	printf("%sFREQUENCY BAND {\n"
+		"%s  NUMBER: %d\n", indent, indent, band_no);
+
+	if (IEEE80211_CAPABILITY_FLAG_HT_CAP_SET(cap_flags, OF_VERSION_1_3)) {
+		of_ht_cap = of_sdwn_entity_band_ht_capabilities_get(band);
+		of_ht_cap_to_nl(of_ht_cap, &ht_cap);
+		print_ht_capabilities(&ht_cap, indent_depth + 1);
+	}
+
+	// if (IEEE80211_CAPABILITY_FLAG_VHT_CAP_SET(cap_flags, OF_VERSION_1_3)) {
+	// 	vht_cap = of_sdwn_entity_band_vht_capabilities_get(band);
+	// 	of_vht_cap_to_loci(of_vht_cap, &vht_cap);
+	// 	print_vht_capabilities(&vht_cap, 1);
+	// }
+
+	printf("}\n");
+}
+
+static void
+print_frequency_entity(of_sdwn_entity_freq_t *freq, size_t indent_depth)
+{
+	if (!freq)
+		return;
+
+	INDENT_BUF(indent, indent_depth);
+
+	uint32_t index, f, max_tx_power;
+	uint16_t band_no;
+
+	of_sdwn_entity_freq_index_get(freq, &index);
+	of_sdwn_entity_freq_band_no_get(freq, &band_no);
+	of_sdwn_entity_freq_freq_get(freq, &f);
+	of_sdwn_entity_freq_max_tx_power_get(freq, &max_tx_power);
+
+	printf("%sFREQUENCY {\n", indent);
+	printf("%s  INDEX: %d\n", indent, index);
+	printf("%s  BAND NUMBER: %d\n", indent, band_no);
+	printf("%s  FREQUENCY: %d\n", indent, f);
+	printf("%s  MAX TX POWER: %d\n", indent, max_tx_power);
+	printf("%s}\n", indent);
+}
+
 void
 _DEBUG_print_sdwn_entities(void *arg)
 {
@@ -359,6 +445,12 @@ _DEBUG_print_sdwn_entities(void *arg)
                 _DEBUG_print_sdwn_related_switch_entity(
                     (of_sdwn_entity_related_switch_t*) &cur);
                 break;
+            case OF_SDWN_ENTITY_BAND:
+            	print_frequency_band_entity((of_sdwn_entity_band_t*) &cur, 1);
+            	break;
+            case OF_SDWN_ENTITY_FREQ:
+            	print_frequency_entity((of_sdwn_entity_freq_t*) &cur, 1);
+            	break;
         }
     }       
 }

@@ -104,9 +104,6 @@ out_socket:
 
 static int
 handle_del_station(struct nlattr **tb) {
-
-	printf("call :: %s\n", __func__);
-
 	struct ether_addr mac, bssid;
 	char if_name[IF_NAMESIZE + 1];
 	memset(if_name, 0, IF_NAMESIZE + 1);
@@ -515,7 +512,19 @@ get_wphy_info_cb(struct nl_msg *msg, struct get_wphy_info_cb_args *args)
 	}
 
 	// append last band
-	info_buf_append(&args->band_buf, &args->cur_band);
+	{
+		// add gathered frequency info and reset freq_buf
+		args->cur_band.freqs = (struct ieee80211_freq_info*) args->freq_buf.buf;
+		args->cur_band.n_freqs = args->freq_buf.n_el;
+		info_buf_reset(&args->freq_buf);
+
+		// add gathered rates info and reset rate_buf
+		args->cur_band.rates = (uint32_t*) args->rate_buf.buf;
+		args->cur_band.n_rates = args->rate_buf.n_el;
+		info_buf_reset(&args->rate_buf);
+
+		info_buf_append(&args->band_buf, &args->cur_band);
+	}
 
 	args->phy->bands = (struct ieee80211_band*) args->band_buf.buf;
 	args->phy->n_bands = args->band_buf.n_el;
@@ -523,10 +532,6 @@ get_wphy_info_cb(struct nl_msg *msg, struct get_wphy_info_cb_args *args)
 	return NL_SKIP;
 }
 
-/*
- * TODOs
- *   - DRY! this function looks almost like nl_get_phy_capabilities
- */
 int
 nl_get_phy_info(struct wphy_info *phy, unsigned int devindex)
 {
@@ -611,9 +616,6 @@ nl_add_client(struct ether_addr* ap_mac, struct ether_addr* sta_mac,
 	size_t supp_rates_len, struct ieee80211_ht_cap *ht_cap,
 	struct ieee80211_vht_cap *vht_cap)
 {
-	printf("call :: %s (AP=%s ", __func__, ether_ntoa(ap_mac));
-	printf("STA=%s)\n", ether_ntoa(sta_mac));
-
 	struct nl_msg *msg;
 	struct nl_cb *cb_newsta;
 	int err_newsta = -ENOMEM;
@@ -657,7 +659,7 @@ nl_add_client(struct ether_addr* ap_mac, struct ether_addr* sta_mac,
 
 	while (err_newsta > 0) {
 		int res = nl_recvmsgs(nlstate.nl_sock, cb_newsta);
-		printf("new sta add, err:%d\n",err_newsta);
+		printf("new client add, err:%d\n",err_newsta);
 	}
 	nl_cb_put(cb_newsta);
 	nlmsg_free(msg);
@@ -704,8 +706,6 @@ nla_put_failure:
 static int
 add_interface(struct ether_addr* bssid)
 {
-	printf("call :: %s (BSSID=%s)\n", __func__, ether_ntoa(bssid));
-
 	struct nl_msg *msg;
 	struct nl_cb *cb_newsta;
 	int err_newsta = -ENOMEM;
@@ -750,8 +750,6 @@ struct client_cb_args {
 static int
 print_sta_handler(struct nl_msg *msg, struct client_cb_args *arg)
 {
-	printf("print_sta_handler called\n");
-
 	struct nlattr *tb[NL80211_ATTR_MAX + 1];
 	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
 	struct nlattr *sinfo[NL80211_STA_INFO_MAX + 1];
@@ -1101,7 +1099,6 @@ static int
 mlme_handler(struct nl_msg *msg, void *arg)
 {
 	struct ether_addr mac;
-	// struct ether_addr bssid;
 	char if_name[IF_NAMESIZE + 1];
 	int ret;
 	uint32_t if_index;
@@ -1115,8 +1112,6 @@ mlme_handler(struct nl_msg *msg, void *arg)
 	if (gnlh->cmd != NL80211_CMD_NEW_STATION) {
 		goto skip;
 	}
-
-	printf("netlink detected new STA\n");
 
 	if (!tb[NL80211_ATTR_MAC]) {
 		printf("expected NL80211_ATTR_MAC\n");
@@ -1138,7 +1133,6 @@ mlme_handler(struct nl_msg *msg, void *arg)
 		printf("VHT capability!\n");
 	}
 
-	// nl_get_mac_address(&bssid, nla_get_u32(tb[NL80211_ATTR_IFINDEX]));
 	if_indextoname(if_index, if_name);
 	memcpy(&mac, nla_data(tb[NL80211_ATTR_MAC]), ETH_ALEN);
 
@@ -1146,7 +1140,7 @@ mlme_handler(struct nl_msg *msg, void *arg)
 
 skip:
 	if (gnlh->cmd == NL80211_CMD_DEL_STATION) {
-		printf("STA disconnected\n");
+		printf("client disconnected\n");
 		handle_del_station(tb);
 	}
 	return NL_SKIP;

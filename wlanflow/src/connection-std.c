@@ -15,10 +15,6 @@
 
 #define OK(op) INDIGO_ASSERT((op) == INDIGO_ERROR_NONE)
 
-/* Kann weg
- */
-uint16_t remote_port;
-
 static indigo_cxn_protocol_params_t protocol_params;
 static indigo_cxn_config_params_t config_params;
 
@@ -63,11 +59,9 @@ conn_status_change(indigo_cxn_id_t cxn_id,
 }
 
 int
-conn_init(uint16_t port, char *ctl_addr, uint16_t ctl_port)
+conn_init(char *ctl_addr, uint16_t ctl_port)
 {
     ind_cxn_config_t cm_cfg;
-
-    remote_port = port;
 
     int ret, controller_id;    
     OK(ind_cxn_init(&cm_cfg));

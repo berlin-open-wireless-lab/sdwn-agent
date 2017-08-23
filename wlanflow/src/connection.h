@@ -8,10 +8,7 @@
 
 #include "wlanflow.h"
 
-extern uint16_t remote_port;
-
-/* Initial */
-int conn_init(uint16_t remote_port, char *ctl_addr, uint16_t ctl_port);
+int conn_init(char *ctl_addr, uint16_t ctl_port);
 int conn_stop(int controller_id);
 
 /* Standard OpenFlow messages */
@@ -41,9 +38,6 @@ int conn_handle_experimenter_multipart_request(indigo_cxn_id_t cxn_id, of_experi
 int conn_handle_meter_features_multipart_request(indigo_cxn_id_t cxn_id, of_meter_features_stats_request_t *req);
 
 /* SDWN messages */
-
-/* SDWN Get Remote Port Request */
-int conn_handle_sdwn_get_remote_port_req(indigo_cxn_id_t cxn_id, of_sdwn_get_remote_port_request_t *req);
 
 /* SDWN Add Client Command */
 int conn_handle_sdwn_add_client_cmd(indigo_cxn_id_t cxn_id, of_sdwn_add_client_t *cmd);

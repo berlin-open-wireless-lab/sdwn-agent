@@ -28,10 +28,6 @@
 
 #define OK(op) INDIGO_ASSERT((op) == INDIGO_ERROR_NONE)
 
-#define DEFAULT_REMOTE_PORT 0
-
-uint16_t remote_port = DEFAULT_REMOTE_PORT;
-
 static int controller_id;
 static int ubus_fd = -1;
 static pthread_mutex_t mutex;
@@ -39,7 +35,7 @@ static bool run = true;
 
 int
 wf_add_client(uint32_t if_index, struct ether_addr *client_mac,
-           const char *if_name)
+              const char *if_name)
 {
     union station_info client;
     struct stainfo *client_info;
@@ -57,8 +53,6 @@ wf_add_client(uint32_t if_index, struct ether_addr *client_mac,
     ret = ubus_get_client_info(if_index, client_mac, if_name, &client);
     if (ret)
         goto error;
-
-    // nl_get_mac_address(&bssid, if_index);
 
     if (encrypted)
         client_info = &client.encrypted.client_info;
@@ -81,9 +75,6 @@ void
 wf_del_client(uint32_t if_no, struct ether_addr* client_mac,
               const char *if_name)
 {
-    printf("call :: %s (client=%s, iface=%s)\n",
-           __func__, ether_ntoa(client_mac), if_name);
-
     uint32_t chan;
     int cxn_id, of_version;
     bool encrypted;
@@ -125,11 +116,6 @@ cxn_msg_rx(indigo_cxn_id_t cxn_id, of_object_t *obj)
     case OF_DESC_STATS_REQUEST:
         printf("got: DESCRIPTION MULTIPART REQUEST\n");
         conn_handle_desc_multipart_req(cxn_id, (of_desc_stats_request_t*) obj);
-        break;
-    case OF_SDWN_GET_REMOTE_PORT_REQUEST:
-        printf("got: GET REMOTE PORT REQUEST\n");
-        conn_handle_sdwn_get_remote_port_req(cxn_id,
-            (of_sdwn_get_remote_port_request_t*) obj);
         break;
     case OF_SDWN_ADD_CLIENT:
         printf("got: ADD CLIENT COMMAND\n");
@@ -256,12 +242,11 @@ usage(const char *progname)
         "Options:\n"
         " -c <controller address>:        OpenFlow controller address\n"
         " -p <controller port>:           OpenFlow controller listening port (default: %u)\n"
-        " -r <remote port>:               remote port (default: %d\n"
         " -u <ubus path>:                 path to ubus socket\n"
         "\n"
         "Options are read from UCI config file (default path: /etc/config/sdwn).\n"
         "Arguments given here override config file parameters."
-        "\n", progname, DEFAULT_CONTROLLER_PORT, DEFAULT_REMOTE_PORT);
+        "\n", progname, DEFAULT_CONTROLLER_PORT);
 
     return 1;
 }
@@ -272,22 +257,22 @@ main(int argc, char **argv)
     int ret, opt, ubus_fd;
     char *ctl_addr = NULL, *ubus_path = NULL;
     uint16_t ctl_port = DEFAULT_CONTROLLER_PORT;
+    bool cli_addr = false;
 
     config_init(&ctl_addr, &ctl_port);
 
-    while ((opt = getopt(argc, argv, "c:p:r:u:")) != -1) {
+    while ((opt = getopt(argc, argv, "c:p:u:")) != -1) {
         switch (opt) {
         case 'c':
             ctl_addr = optarg;
+            cli_addr = true;
             break;
         case 'p':
             ctl_port = atoi(optarg);
             break;
-        case 'r':
-            remote_port = atoi(optarg);
-            break;
         case 'u':
             ubus_path = optarg;
+            break;
         default:
             return usage(argv[0]);
         }
@@ -298,10 +283,14 @@ main(int argc, char **argv)
 
     nl_init();
     socketmanager_init();
-    ubus_init(ubus_path);
+    if (ubus_init(ubus_path)) {
+        fprintf(stderr, "ubus initialization failed\n");
+        return -1;
+    }
 
-    controller_id = conn_init(remote_port, ctl_addr, ctl_port);
-    free(ctl_addr);
+    controller_id = conn_init(ctl_addr, ctl_port);
+    if (!cli_addr)
+        free(ctl_addr);
 
     while (run) {
         ret = ind_soc_select_and_run(-1);
@@ -358,7 +347,7 @@ wlanflow_reload(void)
     if (ret)
         return ret;
 
-    controller_id = conn_init(remote_port, ctl_addr, ctl_port);
+    controller_id = conn_init(ctl_addr, ctl_port);
     free(ctl_addr);
 
     return 0;

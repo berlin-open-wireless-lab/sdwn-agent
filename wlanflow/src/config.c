@@ -37,6 +37,8 @@ config_read(struct uci_package *pkg, char **ipaddr, uint16_t *port)
 
 		return 0;
 	}
+
+	return -1;
 }
 
 int

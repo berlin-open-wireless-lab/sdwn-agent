@@ -184,7 +184,7 @@ get_clients_cb(struct ubus_request *req, int type, struct blob_attr *msg)
     rc = blobmsg_get_u32(tb[HOSTAPD_FREQUENCY_CODE]);
 
     if (!tb[HOSTAPD_STATIONS]) {
-        fprintf(stderr, "No STAs found");
+        fprintf(stderr, "No clients found");
         // goto error;
         return;
     }
@@ -314,8 +314,6 @@ ubus_add_client(uint32_t if_no, union station_info *client, bool encrypted)
     struct stainfo *client_info;
     int ret;
 
-    static const char *NULLKEY = "000000000000";
-
     if (encrypted)
         client_info = &client->encrypted.client_info;
     else
@@ -370,9 +368,6 @@ int
 ubus_del_client(uint32_t if_no, struct ether_addr *client_mac,
              uint16_t reason, bool deauth, uint32_t ban_time)
 {
-    printf("call :: %s (client=%s, reason=%d, deauth=%d, ban_time=%d)\n",
-            __func__, ether_ntoa(client_mac), reason, deauth, ban_time);
-
     struct monitoring_context *cur, *dst = NULL;
     char macaddrstr[20];
     int ret;
@@ -1130,8 +1125,6 @@ static int
 copy_client_info_cb(union station_info *s, bool last,
                     struct cb_args_get_info *args)
 {
-    printf("call :: %s\n", __func__);
-
     struct stainfo *client_info;
 
     if (args->encrypted)
@@ -1141,7 +1134,6 @@ copy_client_info_cb(union station_info *s, bool last,
 
     if (!memcmp(&client_info->mac, args->client_mac, ETH_ALEN)) {
         memcpy(args->client, s, sizeof(union station_info));
-        printf("client info copied\n");
         return FOR_ALL_CLIENTS_CB_STATUS_STOP;
     }
 

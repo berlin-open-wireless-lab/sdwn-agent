@@ -24,7 +24,6 @@ struct cb_args_of {
     bool encrypted;
 };
 
-
 static of_ieee80211_ht_cap_t*
 ieee_ht_caps_to_of(struct ieee80211_ht_cap *ht, of_version_t of_version)
 {
@@ -75,36 +74,12 @@ send_client_info_lvap(union station_info *s, bool last, struct cb_args_of *args)
 static int
 send_client_info(union station_info *sta, bool last, void *arg)
 {
-    printf("call :: %s\n", __func__);
-
     struct cb_args_of *args = arg;
 
     conn_send_get_clients_reply(args->cxn_id, args->of_version, args->xid, sta,
                              args->encrypted, !last);
 
     return FOR_ALL_CLIENTS_CB_STATUS_CONTINUE;
-}
-
-int
-conn_handle_sdwn_get_remote_port_req(indigo_cxn_id_t cxn_id,
-    of_sdwn_get_remote_port_request_t *req)
-{
-    of_sdwn_get_remote_port_reply_t *reply;
-    uint32_t xid;
-    uint16_t flags = 0;
-
-    of_sdwn_get_remote_port_request_xid_get(req, &xid);
-
-    if ((reply = of_sdwn_get_remote_port_reply_new(req->version)) == NULL) {
-        printf("Could not allocate config response obj\n");
-        return -1;
-    }
-
-    of_sdwn_get_remote_port_reply_xid_set(reply, xid);
-    of_sdwn_get_remote_port_reply_if_no_set(reply, remote_port);
-    indigo_cxn_send_controller_message(cxn_id, reply);
-
-    return 0;
 }
 
 int
@@ -257,8 +232,6 @@ conn_handle_sdwn_get_clients_req(indigo_cxn_id_t cxn_id,
 int
 conn_handle_sdwn_add_lvap_cmd(indigo_cxn_id_t cxn_id, of_sdwn_add_lvap_t *cmd)
 {
-    printf("call :: %s\n", __func__);
-
     of_mac_addr_t bssid;
     struct ieee80211_beacon_head *beacon;
     char *test_ssid = "===>TEST<===";
@@ -357,27 +330,6 @@ conn_handle_sdwn_set_channel_cmd(indigo_cxn_id_t cxn_id,
 
     indigo_cxn_send_controller_message(cxn_id, reply);
     // nl_set_channel(if_index, ieee80211_frequency_to_channel(freq));
-}
-
-static void
-loci_ht_cap_to_nl(of_ieee80211_ht_cap_t *in, struct ieee80211_ht_cap *out)
-{
-    of_ieee80211_mcs_info_t *mcs;
-    of_ieee80211_mcs_rx_mask_t rx_mask;
-    {
-        mcs = of_ieee80211_ht_cap_mcs_get(in);
-        of_ieee80211_mcs_info_rx_mask_get(in, &rx_mask);
-
-        memcpy(&out->mcs.rx_mask, &rx_mask.bytes, 10);
-        of_ieee80211_mcs_info_rx_highest_get(in, &out->mcs.rx_highest);
-        of_ieee80211_mcs_info_tx_params_get(in, &out->mcs.tx_params);
-    }
-    {
-        of_ieee80211_ht_cap_cap_info_get(in, &out->cap_info);
-        of_ieee80211_ht_cap_ampdu_params_info_get(in, &out->ampdu_params_info);
-        of_ieee80211_ht_cap_extended_ht_cap_info_get(in,
-            &out->extended_ht_cap_info);
-    }
 }
 
 /* translate ieee80211_ht_cap structs from ieee80211.h to loci type */
@@ -843,7 +795,7 @@ conn_handle_sdwn_port_desc_multipart_request(indigo_cxn_id_t cxn_id,
     of_sdwn_port_desc_reply_xid_set(reply, xid);
     of_sdwn_port_desc_reply_entities_set(reply, entities);
 
-    _DEBUG_print_sdwn_entities(entities);
+    // _DEBUG_print_sdwn_entities(entities);
 
     indigo_cxn_send_controller_message(cxn_id, reply);
 
