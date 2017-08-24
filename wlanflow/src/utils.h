@@ -56,4 +56,9 @@ int ieee80211_channel_to_frequency(uint8_t chan, enum nl80211_band band);
 
 int ieee80211_frequency_to_channel(int freq);
 
+/* Bit reversing functions */
+uint8_t u8_bitrev(uint8_t);
+uint16_t u16_bitrev(uint16_t);
+uint32_t u32_bitrev(uint32_t);
+
 #endif

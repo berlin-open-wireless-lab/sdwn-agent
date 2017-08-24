@@ -454,3 +454,59 @@ _DEBUG_print_sdwn_entities(void *arg)
         }
     }       
 }
+
+uint8_t
+u8_bitrev(uint8_t in)
+{
+	if (!in)
+		return in;
+
+	uint8_t out = 0;
+
+	for (size_t i = 0; i < 8; i++)
+		if (in & (1 << i))
+			out |= (1 << (7 - i));
+	return out;
+}
+
+uint16_t
+u16_bitrev(uint16_t in)
+{
+	if (!in)
+		return in;
+
+	uint16_t out = 0;
+
+	for (size_t i = 0; i < 16; i++)
+		if (in & (1 << i))
+			out |= (1 << (15 - i));
+	return out;
+}
+
+uint32_t
+u32_bitrev(uint32_t in)
+{
+	if (!in)
+		return in;
+
+	uint32_t out = 0;
+
+	for (size_t i = 0; i < 32; i++)
+		if (in & (1 << i))
+			out |= (1 << (31 - i));
+	return out;
+}
+
+uint64_t
+u64_bitrev(uint64_t in)
+{
+	if (!in)
+		return in;
+
+	uint64_t out = 0;
+
+	for (size_t i = 0; i < 64; i++)
+		if (in & (1 << i))
+			out |= (1 << (63 - i));
+	return out;
+}

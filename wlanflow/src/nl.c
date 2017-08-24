@@ -421,7 +421,7 @@ get_wphy_info_cb(struct nl_msg *msg, struct get_wphy_info_cb_args *args)
 					return -ENOMEM;
 			}
 			args->cur_band.ht_cap->cap_info = 
-				nla_get_u16(tb_band[NL80211_BAND_ATTR_HT_CAPA]);
+				u16_bitrev(nla_get_u16(tb_band[NL80211_BAND_ATTR_HT_CAPA]));
 		}
 
 		if (tb_band[NL80211_BAND_ATTR_HT_AMPDU_FACTOR]) {
@@ -431,7 +431,7 @@ get_wphy_info_cb(struct nl_msg *msg, struct get_wphy_info_cb_args *args)
 					return -ENOMEM;
 			}
 			args->cur_band.ht_cap->ampdu_params_info |= 
-				nla_get_u8(tb_band[NL80211_BAND_ATTR_HT_AMPDU_FACTOR]);
+				u8_bitrev(nla_get_u8(tb_band[NL80211_BAND_ATTR_HT_AMPDU_FACTOR]));
 		}
 
 		if (tb_band[NL80211_BAND_ATTR_HT_AMPDU_DENSITY]) {
@@ -441,7 +441,7 @@ get_wphy_info_cb(struct nl_msg *msg, struct get_wphy_info_cb_args *args)
 					return -ENOMEM;
 			}
 			args->cur_band.ht_cap->ampdu_params_info |= 
-				(nla_get_u8(tb_band[NL80211_BAND_ATTR_HT_AMPDU_DENSITY]) << 2);
+				(u8_bitrev(nla_get_u8(tb_band[NL80211_BAND_ATTR_HT_AMPDU_DENSITY])) << 2);
 		}
 
 		if (tb_band[NL80211_BAND_ATTR_HT_MCS_SET] &&
@@ -462,8 +462,9 @@ get_wphy_info_cb(struct nl_msg *msg, struct get_wphy_info_cb_args *args)
 					return -ENOMEM;
 			}		
 			args->cur_band.vht_cap->cap_info = 
-				nla_get_u32(tb_band[NL80211_BAND_ATTR_VHT_CAPA]),
-					nla_data(tb_band[NL80211_BAND_ATTR_VHT_MCS_SET]);
+				u32_bitrev(nla_get_u32(tb_band[NL80211_BAND_ATTR_VHT_CAPA]));
+
+					// TODO! nla_data(tb_band[NL80211_BAND_ATTR_VHT_MCS_SET]);
 		}
 
 		if (tb_band[NL80211_BAND_ATTR_FREQS]) {
@@ -616,6 +617,9 @@ nl_add_client(struct ether_addr* ap_mac, struct ether_addr* sta_mac,
 	size_t supp_rates_len, struct ieee80211_ht_cap *ht_cap,
 	struct ieee80211_vht_cap *vht_cap)
 {
+	printf("call :: %s (AP=%s ", __func__, ether_ntoa(ap_mac));
+	printf("client=%s)\n", ether_ntoa(sta_mac));
+
 	struct nl_msg *msg;
 	struct nl_cb *cb_newsta;
 	int err_newsta = -ENOMEM;
