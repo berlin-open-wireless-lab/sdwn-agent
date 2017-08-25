@@ -1,6 +1,6 @@
 # SDWN agent feed repository for LEDE/OpenWRT
 
-This is the SDWN agent source code to be used in conjunction with the [SDWN ONOS Controller Application](https://github.com/berlin-open-wireless-lab/sdwn-onos)
+This is the SDWN agent source code to be used in conjunction with the [SDWN Controller for ONOS](https://github.com/berlin-open-wireless-lab/sdwn-controller)
 
 ## Installation
 
