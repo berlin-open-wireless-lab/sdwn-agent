@@ -30,7 +30,8 @@ service_running() {
 	ubus -t 30 wait_for wlanflow
 }
 
+# configuration file to watch
 service_triggers()
 {
-	procd_add_reload_trigger wlanflow
+	procd_add_reload_trigger sdwn
 }
